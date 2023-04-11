@@ -1,0 +1,17 @@
+{
+    "name": "LogLinktoDisk",
+    "version": "1.0",
+    "manifest_version": 3,
+    "background": {
+        "service_worker": "background.js"
+    },
+    "action": {
+        "default_title": "LogLinktoDisk"
+    },
+    "host_permissions": ["<all_urls>"],
+    "permissions": [
+        "tabs",
+        "activeTab"
+    ],
+    "author": "Vishnu N K"
+}
