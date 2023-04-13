@@ -2,6 +2,7 @@
 let input = document.getElementById("input");
 let submit = document.getElementById("submit");
 let toggle = document.getElementById("toggle");
+let serverurl = document.getElementById("url");
 
 // Declare a variable to store the current mode
 let mode = "active"; // Possible values are "active" or "all"
@@ -59,9 +60,10 @@ submit.addEventListener("click", function() {
   // Parse the text to get the URL and title
   let url = text.split("\n")[0].split(": ")[1];
   let title = text.split("\n")[1].split(": ")[1];
+  let surl=serverurl.value;
   if (mode === "active") {
     // Send the request with the URL and title as the body
-    fetch('http://127.0.0.1:8080', {
+    fetch(surl, {
         method: 'PUT',
         body: JSON.stringify({url: url, title: title}),
         headers: {
@@ -81,7 +83,7 @@ submit.addEventListener("click", function() {
         chrome.tabs.query({currentWindow: true}, function(tabs) {
             // Loop over the tabs array
             for (let tab of tabs) {
-                fetch('http://127.0.0.1:8080', {
+                fetch(surl, {
                     method: 'PUT',
                     body: JSON.stringify({url: tab.url, title: tab.title}),
                     headers: {
