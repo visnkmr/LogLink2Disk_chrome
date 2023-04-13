@@ -6,7 +6,8 @@
         "service_worker": "background.js"
     },
     "action": {
-        "default_title": "LogLinktoDisk"
+        "default_title": "LogLinktoDisk",
+        "default_popup": "popup.html"
     },
     "host_permissions": ["<all_urls>"],
     "permissions": [
