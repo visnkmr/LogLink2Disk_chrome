@@ -59,22 +59,48 @@ submit.addEventListener("click", function() {
   // Parse the text to get the URL and title
   let url = text.split("\n")[0].split(": ")[1];
   let title = text.split("\n")[1].split(": ")[1];
-
-  // Send the request with the URL and title as the body
-  fetch('http://127.0.0.1:8080', {
-    method: 'PUT',
-    body: JSON.stringify({url: url, title: title}),
-    headers: {
-      'Content-type': 'application/json; charset=UTF-8'
+  if (mode === "active") {
+    // Send the request with the URL and title as the body
+    fetch('http://127.0.0.1:8080', {
+        method: 'PUT',
+        body: JSON.stringify({url: url, title: title}),
+        headers: {
+        'Content-type': 'application/json; charset=UTF-8'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Do something with the response data
+        console.log(data);
+    })
+    .catch(error => {
+        // Handle any errors
+        console.error(error);
+    });
+    }else if (mode === "all") {
+        chrome.tabs.query({currentWindow: true}, function(tabs) {
+            // Loop over the tabs array
+            for (let tab of tabs) {
+                fetch('http://127.0.0.1:8080', {
+                    method: 'PUT',
+                    body: JSON.stringify({url: tab.url, title: tab.title}),
+                    headers: {
+                    'Content-type': 'application/json; charset=UTF-8'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Do something with the response data
+                    console.log(data);
+                })
+                .catch(error => {
+                    // Handle any errors
+                    console.error(error);
+                });
+              // Append the tab URL and title to the textarea value
+              input.value += "URL: " + tab.url + "\nTitle: " + tab.title + "\n\n";
+            }
+          });
     }
-  })
-  .then(response => response.json())
-  .then(data => {
-    // Do something with the response data
-    console.log(data);
-  })
-  .catch(error => {
-    // Handle any errors
-    console.error(error);
-  });
+
 });
