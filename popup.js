@@ -3,6 +3,8 @@ let input = document.getElementById("input");
 let submit = document.getElementById("submit");
 let toggle = document.getElementById("toggle");
 let serverurl = document.getElementById("url");
+let saved = document.getElementById("saved");
+let folder = document.getElementById("folder");
 
 // Declare a variable to store the current mode
 let mode = "active"; // Possible values are "active" or "all"
@@ -54,6 +56,7 @@ toggle.addEventListener("change", function() {
 
 // Add a click event listener to the button
 submit.addEventListener("click", function() {
+  
   // Get the textarea value
   let text = input.value;
 
@@ -61,16 +64,22 @@ submit.addEventListener("click", function() {
   let url = text.split("\n")[0].split(": ")[1];
   let title = text.split("\n")[1].split(": ")[1];
   let surl=serverurl.value;
+  let foldername=folder.value;
+  // saved.value+="saved"+text;
   if (mode === "active") {
     // Send the request with the URL and title as the body
     fetch(surl, {
         method: 'PUT',
-        body: JSON.stringify({url: url, title: title}),
+        body: JSON.stringify({url: url, title: title, folder:foldername}),
         headers: {
         'Content-type': 'application/json; charset=UTF-8'
         }
     })
-    .then(response => response.json())
+    .then(response => {
+          saved.value="\nsaved:\t"+title.substring(0,30);
+          response.json()
+        }
+      )
     .then(data => {
         // Do something with the response data
         console.log(data);
@@ -80,17 +89,22 @@ submit.addEventListener("click", function() {
         console.error(error);
     });
     }else if (mode === "all") {
+        saved.value=""
         chrome.tabs.query({currentWindow: true}, function(tabs) {
             // Loop over the tabs array
             for (let tab of tabs) {
                 fetch(surl, {
                     method: 'PUT',
-                    body: JSON.stringify({url: tab.url, title: tab.title}),
+                    body: JSON.stringify({url: tab.url, title: tab.title, folder:foldername}),
                     headers: {
                     'Content-type': 'application/json; charset=UTF-8'
                     }
                 })
-                .then(response => response.json())
+                .then(response => {
+                    saved.value+="\nsaved:\t"+tab.title.substring(0,30);
+                    response.json()
+                  }
+                )
                 .then(data => {
                     // Do something with the response data
                     console.log(data);
