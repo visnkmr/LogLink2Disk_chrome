@@ -1,13 +1,20 @@
 // Get the textarea, button, and checkbox elements
 let input = document.getElementById("input");
 let submit = document.getElementById("submit");
+
 let toggle = document.getElementById("toggle");
+let left = document.getElementById("left");
+let right = document.getElementById("right");
+let selectedtabs = document.getElementById("selected");
+
 let serverurl = document.getElementById("url");
 let saved = document.getElementById("saved");
 let folder = document.getElementById("folder");
 
 // Declare a variable to store the current mode
 let mode = "active"; // Possible values are "active" or "all"
+// let mode_location = "none"; // Possible values are "active" or "all"
+// let mode_right = "none"; // Possible values are "active" or "all"
 
 // Define a function to update the textarea value based on the mode
 function updateTextarea() {
@@ -27,10 +34,49 @@ function updateTextarea() {
   } else if (mode === "all") {
     // Get all tabs in the current window
     chrome.tabs.query({currentWindow: true}, function(tabs) {
+      console.log(tabs)
       // Loop over the tabs array
       for (let tab of tabs) {
         // Append the tab URL and title to the textarea value
         input.value += "URL: " + tab.url + "\nTitle: " + tab.title + "\n\n";
+      }
+    });
+  }else if (mode === "left") {
+    // Get all tabs in the current window
+    chrome.tabs.query({currentWindow: true}, function(tabs) {
+      console.log(tabs)
+      // Loop over the tabs array
+      for (let tab of tabs) {
+        // Append the tab URL and title to the textarea value
+        if(tab.active==true )
+        break
+        input.value += "URL: " + tab.url + "\nTitle: " + tab.title + "\n\n";
+        
+      }
+    });
+  }else if (mode === "right") {
+    // Get all tabs in the current window
+    chrome.tabs.query({currentWindow: true}, function(tabs) {
+      console.log(tabs)
+      let dshow=false
+      // Loop over the tabs array
+      for (let tab of tabs) {
+        if(tab.active==true)
+          dshow=true
+        // Append the tab URL and title to the textarea value
+        if(dshow && !tab.active)
+          input.value += "URL: " + tab.url + "\nTitle: " + tab.title + "\n\n";
+      }
+    });
+  }else if (mode === "selected") {
+    // Get all tabs in the current window
+    chrome.tabs.query({currentWindow: true}, function(tabs) {
+      console.log(tabs)
+      // Loop over the tabs array
+      for (let tab of tabs) {
+        // Append the tab URL and title to the textarea value
+        if(tab.selected)
+          input.value += "URL: " + tab.url + "\nTitle: " + tab.title + "\n\n";
       }
     });
   }
@@ -45,6 +91,51 @@ toggle.addEventListener("change", function() {
   if (toggle.checked) {
     // Change the mode to "all"
     mode = "all";
+  } else {
+    // Change the mode to "active"
+    mode = "active";
+  }
+
+  // Update the textarea value
+  updateTextarea();
+});
+
+// Add a change event listener to the checkbox
+left.addEventListener("change", function() {
+  // Check the checkbox state
+  if (left.checked) {
+    // Change the mode to "all"
+    mode = "left";
+  } else {
+    // Change the mode to "active"
+    mode = "active";
+  }
+
+  // Update the textarea value
+  updateTextarea();
+});
+
+// Add a change event listener to the checkbox
+right.addEventListener("change", function() {
+  // Check the checkbox state
+  if (right.checked) {
+    // Change the mode to "all"
+    mode = "right";
+  } else {
+    // Change the mode to "active"
+    mode = "active";
+  }
+
+  // Update the textarea value
+  updateTextarea();
+});
+
+// Add a change event listener to the checkbox
+selectedtabs.addEventListener("change", function() {
+  // Check the checkbox state
+  if (selectedtabs.checked) {
+    // Change the mode to "all"
+    mode = "selected";
   } else {
     // Change the mode to "active"
     mode = "active";
@@ -89,10 +180,13 @@ submit.addEventListener("click", function() {
         console.error(error);
     });
     }else if (mode === "all") {
+     
         saved.value=""
         chrome.tabs.query({currentWindow: true}, function(tabs) {
             // Loop over the tabs array
+            
             for (let tab of tabs) {
+              
                 fetch(surl, {
                     method: 'PUT',
                     body: JSON.stringify({url: tab.url, title: tab.title, folder:foldername}),
