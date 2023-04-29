@@ -1,8 +1,8 @@
 // This is the background script that runs in the background of the extension
 // It listens for a browser action click and sends a message to the content script
-console.log("hello")
+// console.log("hello")
 chrome.action.onClicked.addListener(function(tab) {
-  console.log(tab)
+//   console.log(tab)
        
         fetch('http://127.0.0.1:8080', {
             method: 'PUT',

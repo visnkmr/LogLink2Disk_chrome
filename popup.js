@@ -7,6 +7,9 @@ let left = document.getElementById("left");
 let right = document.getElementById("right");
 let selectedtabs = document.getElementById("selected");
 
+let browser = document.getElementById("browser");
+let time = document.getElementById("time");
+
 let serverurl = document.getElementById("url");
 let saved = document.getElementById("saved");
 let folder = document.getElementById("folder");
@@ -16,33 +19,33 @@ let mode = "active"; // Possible values are "active" or "all"
 // let mode_location = "none"; // Possible values are "active" or "all"
 // let mode_right = "none"; // Possible values are "active" or "all"
 
+// Define a function that returns today's date and time as a string
+function getTodayDateTimeString() {
+// Create a new Date object with the current date and time
+let today = new Date();
+// Get the year, month, day, hour, minute and second from the Date object
+let year = today.getFullYear();
+let month = today.getMonth() + 1; // Months are zero-based
+let day = today.getDate();
+let hour = today.getHours();
+let minute = today.getMinutes();
+let second = today.getSeconds();
+// Pad the month, day, hour, minute and second with leading zeros if needed
+month = month < 10 ? "0" + month : month;
+day = day < 10 ? "0" + day : day;
+hour = hour < 10 ? "0" + hour : hour;
+minute = minute < 10 ? "0" + minute : minute;
+second = second < 10 ? "0" + second : second;
+// Return the date and time as a string in the format yyyy-mm-dd_hh-mm-ss
+return year + "-" + month + "-" + day + "_" + hour + "-" + minute + "-" + second;
+}
 // Define a function to update the textarea value based on the mode
 function updateTextarea() {
-  // Define a function that returns today's date and time as a string
-function getTodayDateTimeString() {
-  // Create a new Date object with the current date and time
-  let today = new Date();
-  // Get the year, month, day, hour, minute and second from the Date object
-  let year = today.getFullYear();
-  let month = today.getMonth() + 1; // Months are zero-based
-  let day = today.getDate();
-  let hour = today.getHours();
-  let minute = today.getMinutes();
-  let second = today.getSeconds();
-  // Pad the month, day, hour, minute and second with leading zeros if needed
-  month = month < 10 ? "0" + month : month;
-  day = day < 10 ? "0" + day : day;
-  hour = hour < 10 ? "0" + hour : hour;
-  minute = minute < 10 ? "0" + minute : minute;
-  second = second < 10 ? "0" + second : second;
-  // Return the date and time as a string in the format yyyy-mm-dd_hh-mm-ss
-  return year + "-" + month + "-" + day + "_" + hour + "-" + minute + "-" + second;
-}
 
 // Call the function and print the result
-console.log(getTodayDateTimeString());
+// console.log(getTodayDateTimeString());
 
-folder.innerHTML=getTodayDateTimeString();
+
 
   // Check the mode
   if (mode === "active") {
@@ -136,6 +139,36 @@ left.addEventListener("change", function() {
 
   // Update the textarea value
   updateTextarea();
+});
+
+// Add a change event listener to the checkbox
+time.addEventListener("change", function() {
+  // Check the checkbox state
+  if (time.checked) {
+    // Change the mode to "all"
+    folder.innerHTML=getTodayDateTimeString();
+  } else {
+    // Change the mode to "active"
+    folder.innerHTML="";
+  }
+
+  // Update the textarea value
+  // updateTextarea();
+});
+folder.innerHTML=getTodayDateTimeString();
+// Add a change event listener to the checkbox
+browser.addEventListener("change", function() {
+  // Check the checkbox state
+  if (browser.checked) {
+    // Change the mode to "all"
+    folder.innerHTML="chrome";
+  } else {
+    // Change the mode to "active"
+    folder.innerHTML="";
+  }
+
+  // Update the textarea value
+  // updateTextarea();
 });
 
 // Add a change event listener to the checkbox
