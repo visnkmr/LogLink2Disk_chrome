@@ -85,7 +85,7 @@ function updateTextarea() {
       // Loop over the tabs array
       for (let tab of tabs) {
         // Append the tab URL and title to the textarea value
-        if(tab.selected)
+        if(tab.highlighted)
           input.value += "URL: " + tab.url + "\nTitle: " + tab.title + "\n\n";
       }
     });
