@@ -1,7 +1,6 @@
 
 import {getTodayDateTimeString} from './gettodaytime';
 
-
 let input = document.getElementById("input") as HTMLInputElement;
 let submit = document.getElementById("submit") as HTMLButtonElement;
 
@@ -198,12 +197,22 @@ submit.addEventListener("click", function() {
   let foldername=folder.value;
   // saved.value+="saved"+text;
   if (mode === "active") {
+    let listtosave={
+      sessionname:foldername,
+      browsername:"chromium based",
+      tablist:[
+        {
+          title:title,
+          url:url
+        }
+      ]
+    }
     // Send the request with the URL and title as the body
-    fetch(surl, {
-        method: 'PUT',
-        body: JSON.stringify({url: url, title: title, folder:foldername}),
+    fetch('https://listallfrompscale.vercel.app/api/update', {
+        method: 'POST',
+        body: `uid=${surl}&datatoadd=${JSON.stringify(listtosave)}`,
         headers: {
-        'Content-type': 'application/json; charset=UTF-8'
+          'Content-Type': 'application/x-www-form-urlencoded'
         }
     })
     .then(response => {
@@ -222,20 +231,37 @@ submit.addEventListener("click", function() {
     }else if (mode === "all") {
      
         saved.value=""
+        
+        let tabstosave=[{}];
         chrome.tabs.query({currentWindow: true}, function(tabs) {
             // Loop over the tabs array
             
             for (let tab of tabs) {
-              
-                fetch(surl, {
-                    method: 'PUT',
-                    body: JSON.stringify({url: tab.url, title: tab.title, folder:foldername}),
+                tabstosave.push(
+                  {
+                    title:tab.title,
+                    url:tab.url
+                  }
+                )
+                
+              // Append the tab URL and title to the textarea value
+              input.value += "URL: " + tab.url + "\nTitle: " + tab.title + "\n\n";
+            }
+            let listtosave={
+              sessionname:foldername,
+              browsername:"chromium based",
+              tablist:tabstosave
+            }
+            fetch('https://listallfrompscale.vercel.app/api/update', {
+                    method: 'POST',
+                    body: `uid=${surl}&datatoadd=${JSON.stringify(listtosave)}`,
                     headers: {
-                    'Content-type': 'application/json; charset=UTF-8'
+                      'Content-Type': 'application/x-www-form-urlencoded'
                     }
                 })
                 .then(response => {
-                    saved.value+="\nsaved:\t"+tab.title!.substring(0,30);
+                    saved.value+="\nsaved tabs";
+                    // saved.value+="\nsaved:\t"+tab.title!.substring(0,30);
                     response.json()
                   }
                 )
@@ -247,9 +273,6 @@ submit.addEventListener("click", function() {
                     // Handle any errors
                     console.error(error);
                 });
-              // Append the tab URL and title to the textarea value
-              input.value += "URL: " + tab.url + "\nTitle: " + tab.title + "\n\n";
-            }
           });
     }
 
