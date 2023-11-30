@@ -1,6 +1,7 @@
 {
   "devDependencies": {
-    "@types/chrome": "^0.0.234",
+    "@types/chrome": "^0.0.253",
+    "axios": "^1.6.2",
     "ts-loader": "^9.4.2",
     "typescript": "^5.0.4",
     "webpack": "^5.81.0",

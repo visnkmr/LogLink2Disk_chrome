@@ -1,5 +1,6 @@
 
 import {getTodayDateTimeString} from './gettodaytime';
+import axios from "axios";
 
 let input = document.getElementById("input") as HTMLInputElement;
 let submit = document.getElementById("submit") as HTMLButtonElement;
@@ -208,12 +209,13 @@ submit.addEventListener("click", function() {
         }
       ]
     }
+    submittodb(surl,listtosave);
     
     }else if (mode === "all") {
      
         saved.value=""
         
-        let tabstosave=[{}];
+        let tabstosave:Array<object>=[];
         chrome.tabs.query({currentWindow: true}, function(tabs) {
             // Loop over the tabs array
             
@@ -233,6 +235,8 @@ submit.addEventListener("click", function() {
               browsername:"chromium based",
               tablist:tabstosave
             }
+            submittodb(surl,listtosave);
+            // console.log("fromhere--->\n"+JSON.stringify(listtosave))
             // fetch('https://listallfrompscale.vercel.app/api/update', {
             //         method: 'POST',
             //         body: `uid=${surl}&datatoadd=${JSON.stringify(listtosave)}`,
@@ -256,7 +260,7 @@ submit.addEventListener("click", function() {
             //     });
           });
     }else if (mode === "left") {
-      let tabstosave=[{}];
+      let tabstosave:Array<object>=[];
 
       // Get all tabs in the current window
       chrome.tabs.query({currentWindow: true}, function(tabs) {
@@ -280,9 +284,10 @@ submit.addEventListener("click", function() {
           browsername:"chromium based",
           tablist:tabstosave
         }
+        submittodb(surl,listtosave);
       });
     }else if (mode === "right") {
-      let tabstosave=[{}];
+      let tabstosave:Array<object>=[];
       // Get all tabs in the current window
       chrome.tabs.query({currentWindow: true}, function(tabs) {
         console.log(tabs)
@@ -306,9 +311,10 @@ submit.addEventListener("click", function() {
           browsername:"chromium based",
           tablist:tabstosave
         }
+        submittodb(surl,listtosave);
       });
     }else if (mode === "selected") {
-      let tabstosave=[{}];
+      let tabstosave:Array<object>=[];
       // Get all tabs in the current window
       chrome.tabs.query({currentWindow: true}, function(tabs) {
         console.log(tabs)
@@ -330,29 +336,38 @@ submit.addEventListener("click", function() {
           browsername:"chromium based",
           tablist:tabstosave
         }
+        submittodb(surl,listtosave);
       });
     }
     // Send the request with the URL and title as the body
-    fetch('https://listallfrompscale.vercel.app/api/update', {
-        method: 'POST',
-        body: `uid=${surl}&datatoadd=${JSON.stringify(listtosave)}`,
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        }
-    })
-    .then(response => {
-          saved.value="\nsaved selected tab(s)\t";
-          // +title.substring(0,30);
-          response.json()
-        }
-      )
-    .then(data => {
-        // Do something with the response data
-        console.log(data);
-    })
-    .catch(error => {
-        // Handle any errors
-        console.error(error);
-    });
+    
 
 });
+
+function submittodb(surl:string,listtosave:object){
+  console.log("whenhere:\n"+JSON.stringify(listtosave))
+
+  axios.request({
+    url:'https://listallfrompscale.vercel.app/api/update',
+    method: 'POST',
+    data: {uid: surl, datatoadd: JSON.stringify(listtosave)},
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    }
+})
+.then(response => {
+  console.log(response)
+      saved.value="\nsaved selected tab(s)\t";
+      // +title.substring(0,30);
+      // response.json()
+    }
+  )
+// .then(data => {
+//     // Do something with the response data
+//     console.log(data);
+// })
+.catch(error => {
+    // Handle any errors
+    console.error(error);
+});
+}
