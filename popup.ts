@@ -346,26 +346,29 @@ submit.addEventListener("click", function() {
 
 function submittodb(surl:string,listtosave:object){
   console.log("whenhere:\n"+JSON.stringify(listtosave))
+  const encodedParams = new URLSearchParams();
 
-  axios.request({
-    url:'https://listallfrompscale.vercel.app/api/update',
+encodedParams.set('uid', surl);
+encodedParams.set('datatoadd', JSON.stringify(listtosave));
+console.log(encodedParams)
+  fetch('https://listallfrompscale.vercel.app/api/update', {
     method: 'POST',
-    data: {uid: surl, datatoadd: JSON.stringify(listtosave)},
+    body: encodedParams,
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded'
     }
 })
 .then(response => {
-  console.log(response)
+  console.log(response.json())
       saved.value="\nsaved selected tab(s)\t";
       // +title.substring(0,30);
       // response.json()
     }
   )
-// .then(data => {
-//     // Do something with the response data
-//     console.log(data);
-// })
+.then(data => {
+    // Do something with the response data
+    console.log(data);
+})
 .catch(error => {
     // Handle any errors
     console.error(error);
