@@ -24,7 +24,7 @@ let mode = "active"; // Possible values are "active" or "all"
 
 // Define a function to update the textarea value based on the mode
 function updateTextarea() {
-
+  input.value=""
 // Call the function and print the result
 // console.log(getTodayDateTimeString());
 
@@ -186,7 +186,7 @@ selectedtabs.addEventListener("change", function() {
 
 // Add a click event listener to the button
 submit.addEventListener("click", function() {
-  
+  console.log("clicked")
   // Get the textarea value
   let text = input.value;
 
@@ -195,9 +195,10 @@ submit.addEventListener("click", function() {
   let title = text.split("\n")[1].split(": ")[1];
   let surl=serverurl.value;
   let foldername=folder.value;
+  let listtosave={}
   // saved.value+="saved"+text;
   if (mode === "active") {
-    let listtosave={
+    listtosave={
       sessionname:foldername,
       browsername:"chromium based",
       tablist:[
@@ -207,27 +208,7 @@ submit.addEventListener("click", function() {
         }
       ]
     }
-    // Send the request with the URL and title as the body
-    fetch('https://listallfrompscale.vercel.app/api/update', {
-        method: 'POST',
-        body: `uid=${surl}&datatoadd=${JSON.stringify(listtosave)}`,
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        }
-    })
-    .then(response => {
-          saved.value="\nsaved:\t"+title.substring(0,30);
-          response.json()
-        }
-      )
-    .then(data => {
-        // Do something with the response data
-        console.log(data);
-    })
-    .catch(error => {
-        // Handle any errors
-        console.error(error);
-    });
+    
     }else if (mode === "all") {
      
         saved.value=""
@@ -245,35 +226,133 @@ submit.addEventListener("click", function() {
                 )
                 
               // Append the tab URL and title to the textarea value
-              input.value += "URL: " + tab.url + "\nTitle: " + tab.title + "\n\n";
+              // input.value += "URL: " + tab.url + "\nTitle: " + tab.title + "\n\n";
             }
-            let listtosave={
+            listtosave={
               sessionname:foldername,
               browsername:"chromium based",
               tablist:tabstosave
             }
-            fetch('https://listallfrompscale.vercel.app/api/update', {
-                    method: 'POST',
-                    body: `uid=${surl}&datatoadd=${JSON.stringify(listtosave)}`,
-                    headers: {
-                      'Content-Type': 'application/x-www-form-urlencoded'
-                    }
-                })
-                .then(response => {
-                    saved.value+="\nsaved tabs";
-                    // saved.value+="\nsaved:\t"+tab.title!.substring(0,30);
-                    response.json()
-                  }
-                )
-                .then(data => {
-                    // Do something with the response data
-                    console.log(data);
-                })
-                .catch(error => {
-                    // Handle any errors
-                    console.error(error);
-                });
+            // fetch('https://listallfrompscale.vercel.app/api/update', {
+            //         method: 'POST',
+            //         body: `uid=${surl}&datatoadd=${JSON.stringify(listtosave)}`,
+            //         headers: {
+            //           'Content-Type': 'application/x-www-form-urlencoded'
+            //         }
+            //     })
+            //     .then(response => {
+            //         saved.value+="\nsaved tabs";
+            //         // saved.value+="\nsaved:\t"+tab.title!.substring(0,30);
+            //         response.json()
+            //       }
+            //     )
+            //     .then(data => {
+            //         // Do something with the response data
+            //         console.log(data);
+            //     })
+            //     .catch(error => {
+            //         // Handle any errors
+            //         console.error(error);
+            //     });
           });
+    }else if (mode === "left") {
+      let tabstosave=[{}];
+
+      // Get all tabs in the current window
+      chrome.tabs.query({currentWindow: true}, function(tabs) {
+        console.log(tabs)
+        // Loop over the tabs array
+        for (let tab of tabs) {
+          // Append the tab URL and title to the textarea value
+          if(tab.active==true )
+          break
+          tabstosave.push(
+            {
+              title:tab.title,
+              url:tab.url
+            }
+          )
+          // input.value += "URL: " + tab.url + "\nTitle: " + tab.title + "\n\n";
+          
+        }
+        listtosave={
+          sessionname:foldername,
+          browsername:"chromium based",
+          tablist:tabstosave
+        }
+      });
+    }else if (mode === "right") {
+      let tabstosave=[{}];
+      // Get all tabs in the current window
+      chrome.tabs.query({currentWindow: true}, function(tabs) {
+        console.log(tabs)
+        let dshow=false
+        // Loop over the tabs array
+        for (let tab of tabs) {
+          if(tab.active==true)
+            dshow=true
+          // Append the tab URL and title to the textarea value
+          if(dshow && !tab.active)
+            // input.value += "URL: " + tab.url + "\nTitle: " + tab.title + "\n\n";
+            tabstosave.push(
+              {
+                title:tab.title,
+                url:tab.url
+              }
+            )
+        }
+        listtosave={
+          sessionname:foldername,
+          browsername:"chromium based",
+          tablist:tabstosave
+        }
+      });
+    }else if (mode === "selected") {
+      let tabstosave=[{}];
+      // Get all tabs in the current window
+      chrome.tabs.query({currentWindow: true}, function(tabs) {
+        console.log(tabs)
+        // Loop over the tabs array
+        for (let tab of tabs) {
+          // Append the tab URL and title to the textarea value
+          if(tab.highlighted){
+            tabstosave.push(
+              {
+                title:tab.title,
+                url:tab.url
+              }
+            )
+          }
+            // input.value += "URL: " + tab.url + "\nTitle: " + tab.title + "\n\n";
+        }
+        listtosave={
+          sessionname:foldername,
+          browsername:"chromium based",
+          tablist:tabstosave
+        }
+      });
     }
+    // Send the request with the URL and title as the body
+    fetch('https://listallfrompscale.vercel.app/api/update', {
+        method: 'POST',
+        body: `uid=${surl}&datatoadd=${JSON.stringify(listtosave)}`,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+    })
+    .then(response => {
+          saved.value="\nsaved selected tab(s)\t";
+          // +title.substring(0,30);
+          response.json()
+        }
+      )
+    .then(data => {
+        // Do something with the response data
+        console.log(data);
+    })
+    .catch(error => {
+        // Handle any errors
+        console.error(error);
+    });
 
 });
