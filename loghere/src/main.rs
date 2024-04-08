@@ -29,10 +29,11 @@ fn handle_client(mut request:Request)->Result<(),()> {
             let url = v["url"].as_str().unwrap();
             let title = v["title"].as_str().unwrap_or("");
             let date = Local::now();
-            let current_date = date.format("%Y-%m-%d").to_string();
+            let filename = date.format("%Y-%m-%d").to_string();
+            let current_date = date.format("%Y-%m-%d %H:%M:%S").to_string();
             let tosave=format!("{current_date}\t\t{url}\t\t{title}\n");
             println!("{tosave}");
-            write!(File::options().create(true).append(true).open(format!("./{current_date}.txt")).expect("Cannot create file."), "{}",tosave );
+            write!(File::options().create(true).append(true).open(format!("./{filename}.txt")).expect("Cannot create file."), "{}",tosave );
             let h="Ok";
             // drop(request);
             // redirect(request,"/")?;
