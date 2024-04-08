@@ -1,12 +1,12 @@
 {
-    "name": "LogLinktoDisk",
+    "name": "Save to history_local",
     "version": "1.0",
     "manifest_version": 3,
     "background": {
         "service_worker": "dist/background.js"
     },
     "action": {
-        "default_title": "LogLinktoDisk",
+        "default_title": "history_local",
         "default_popup": "popup.html"
     },
     "host_permissions": ["<all_urls>"],
