@@ -2,8 +2,8 @@ node_modules/
 package-lock.json
 LogLink2Disk_chrome.zip
 gettodaytime.js
-dist/popup.js
-dist/background.js
+dist/
 bun.lockb
 background.js
 popup.js
+    

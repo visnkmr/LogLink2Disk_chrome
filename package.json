@@ -2,15 +2,28 @@
   "devDependencies": {
     "@types/chrome": "^0.0.253",
     "axios": "^1.6.2",
+    "css-loader": "^7.1.2",
+    "mini-css-extract-plugin": "^2.9.4",
+    "postcss-loader": "^8.2.0",
+    "style-loader": "^4.0.0",
     "ts-loader": "^9.4.2",
     "typescript": "^5.0.4",
     "webpack": "^5.81.0",
     "webpack-cli": "^5.0.2"
   },
   "scripts": {
-    "build:ts": "tsc"
+    "build:ts": "tsc",
+    "build": "webpack"
   },
   "dependencies": {
-    "jspdf": "^3.0.4"
+    "@tailwindcss/postcss": "^4.1.18",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "autoprefixer": "^10.4.23",
+    "jspdf": "^3.0.4",
+    "postcss": "^8.5.6",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "tailwindcss": "^4.1.18"
   }
 }

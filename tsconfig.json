@@ -1,11 +1,11 @@
 {
-  // "include": [
-  //   "./*.d.ts",
-  //   "./*.ts",
-  //   "./*.tsx",
-  //   ".next/types/**/*.ts" ],
+  "include": [
+    "./src/**/*"
+  ],
   "compilerOptions": {
     "target": "ES2022",
+    "jsx": "react-jsx",
+    "types": ["chrome"],
     // "types": ["chrome"],
     "removeComments": true,
     // Allow JavaScript files to be compiled
