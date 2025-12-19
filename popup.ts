@@ -23,6 +23,8 @@ let serverurl = document.getElementById("url") as HTMLTextAreaElement;
 let saved = document.getElementById("saved") as HTMLTextAreaElement;
 let folder = document.getElementById("folder") as HTMLTextAreaElement;
 let themeToggle = document.getElementById("themeToggle") as HTMLButtonElement;
+let exportBtn = document.getElementById("exportBtn") as HTMLButtonElement;
+let exportFormat = document.getElementById("exportFormat") as HTMLSelectElement;
 
 // Declare a variable to store the current mode
 let mode = "active"; // Possible values are "active" or "all"
@@ -40,6 +42,42 @@ themeToggle.addEventListener("click", function() {
     themeToggle.textContent = "Toggle Dark";
   }
 });
+
+// Export functionality
+exportBtn.addEventListener("click", () => {
+  const format = exportFormat.value;
+  const data = input.value;
+  let content = '';
+  let mime = '';
+  let filename = `tabs.${format}`;
+  switch(format) {
+    case 'text':
+      content = data;
+      mime = 'text/plain';
+      break;
+    case 'csv':
+      content = convertToCSV(data);
+      mime = 'text/csv';
+      break;
+    case 'md':
+      content = convertToMD(data);
+      mime = 'text/markdown';
+      break;
+    case 'pdf':
+      content = `<html><head><title>Tabs</title></head><body><pre>${data.replace(/\n/g, '<br>')}</pre></body></html>`;
+      mime = 'text/html';
+      filename = 'tabs.html';
+      break;
+  }
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
 // let mode_location = "none"; // Possible values are "active" or "all"
 // let mode_right = "none"; // Possible values are "active" or "all"
 
@@ -713,4 +751,43 @@ console.log(encodedParams)
     // Handle any errors
     console.error(error);
 });
+}
+
+function convertToCSV(text: string): string {
+  const lines = text.split('\n');
+  let csv = 'Window,Title,URL\n';
+  let currentWindow = '';
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line.startsWith('Window: ')) {
+      currentWindow = line.replace('Window: ', '').replace(/"/g, '""');
+    } else if (line.startsWith('URL: ')) {
+      const url = line.replace('URL: ', '').replace(/"/g, '""');
+      const titleLine = lines[i + 1];
+      const title = titleLine && titleLine.startsWith('Title: ') ? titleLine.replace('Title: ', '').replace(/"/g, '""') : '';
+      csv += `"${currentWindow}","${title}","${url}"\n`;
+      i++; // skip title line
+    }
+  }
+  return csv;
+}
+
+function convertToMD(text: string): string {
+  let md = '';
+  const lines = text.split('\n');
+  let currentWindow = '';
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line.startsWith('Window: ')) {
+      currentWindow = line.replace('Window: ', '');
+      md += `## ${currentWindow}\n\n`;
+    } else if (line.startsWith('URL: ')) {
+      const url = line.replace('URL: ', '');
+      const titleLine = lines[i + 1];
+      const title = titleLine && titleLine.startsWith('Title: ') ? titleLine.replace('Title: ', '') : url;
+      md += `- [${title}](${url})\n`;
+      i++; // skip title line
+    }
+  }
+  return md;
 }

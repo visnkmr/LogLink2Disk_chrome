@@ -145,11 +145,21 @@
       margin: 0;
       cursor: pointer;
     }
-    .button-group {
-      display: flex;
-      justify-content: center;
-      margin: 30px 0;
-    }
+     .button-group {
+       display: flex;
+       justify-content: center;
+       align-items: center;
+       gap: 10px;
+       margin: 30px 0;
+     }
+     #exportFormat {
+       padding: 8px 12px;
+       border: 1px solid var(--border-input);
+       border-radius: 6px;
+       background: var(--bg-input);
+       color: var(--color-text);
+       font-size: 14px;
+     }
      button {
        background: #007bff;
        color: white;
@@ -406,9 +416,16 @@
       </div>
     </div>
 
-    <div class="button-group">
-      <button id="submit">Save to LogLink2Disk</button>
-    </div>
+     <div class="button-group">
+       <button id="submit">Save to LogLink2Disk</button>
+       <select id="exportFormat">
+         <option value="text">Text</option>
+         <option value="csv">CSV</option>
+         <option value="md">Markdown</option>
+         <option value="pdf">PDF</option>
+       </select>
+       <button id="exportBtn">Export</button>
+     </div>
 
     <div class="status-area">
       <label for="saved">Status:</label>
