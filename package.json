@@ -9,5 +9,8 @@
   },
   "scripts": {
     "build:ts": "tsc"
+  },
+  "dependencies": {
+    "jspdf": "^3.0.4"
   }
 }

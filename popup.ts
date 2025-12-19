@@ -1,6 +1,7 @@
 
 import {getTodayDateTimeString} from './gettodaytime';
 import axios from "axios";
+import jsPDF from 'jspdf';
 
 let input = document.getElementById("input") as HTMLTextAreaElement;
 let submit = document.getElementById("submit") as HTMLButtonElement;
@@ -64,10 +65,19 @@ exportBtn.addEventListener("click", () => {
       mime = 'text/markdown';
       break;
     case 'pdf':
-      content = `<html><head><title>Tabs</title></head><body><pre>${data.replace(/\n/g, '<br>')}</pre></body></html>`;
-      mime = 'text/html';
-      filename = 'tabs.html';
-      break;
+      const doc = new jsPDF();
+      const lines = data.split('\n');
+      let y = 10;
+      lines.forEach(line => {
+        doc.text(line, 10, y);
+        y += 7;
+        if (y > 280) {
+          doc.addPage();
+          y = 10;
+        }
+      });
+      doc.save('tabs.pdf');
+      return; // don't download blob
   }
   const blob = new Blob([content], { type: mime });
   const url = URL.createObjectURL(blob);
