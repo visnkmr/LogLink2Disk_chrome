@@ -1,39 +1,292 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LogLink2Disk - Save Tab Links</title>
   <style>
-    /* You can add some CSS styles here */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    .container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      padding: 30px;
+      max-width: 600px;
+      width: 100%;
+      margin-top: 20px;
+    }
+    h1 {
+      color: #333;
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 2em;
+    }
+    .section {
+      margin-bottom: 25px;
+    }
+    .section h2 {
+      color: #555;
+      margin-bottom: 10px;
+      font-size: 1.2em;
+      border-bottom: 2px solid #f0f0f0;
+      padding-bottom: 5px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #333;
+    }
+    textarea, input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e1e1e1;
+      border-radius: 8px;
+      font-size: 14px;
+      resize: vertical;
+      box-sizing: border-box;
+      transition: border-color 0.3s;
+    }
+    textarea:focus, input[type="text"]:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    .checkbox-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      background: #f8f9fa;
+      padding: 12px;
+      border-radius: 8px;
+      border: 2px solid #e1e1e1;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+    .checkbox-item:hover {
+      background: #e9ecef;
+      border-color: #667eea;
+    }
+    .checkbox-item input[type="checkbox"] {
+      margin-right: 8px;
+      transform: scale(1.2);
+    }
+    .checkbox-item label {
+      margin: 0;
+      cursor: pointer;
+    }
+    .button-group {
+      display: flex;
+      justify-content: center;
+      margin: 30px 0;
+    }
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    .status-area {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 20px;
+    }
+    .status-area textarea {
+      background: white;
+      border: 1px solid #dee2e6;
+    }
+    .view-toggle {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .view-toggle button {
+      background: #6c757d;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .view-toggle button:hover {
+      background: #5a6268;
+    }
+    .tab-list {
+      max-height: 400px;
+      overflow-y: auto;
+      border: 1px solid #e1e1e1;
+      border-radius: 8px;
+      background: white;
+    }
+    .tab-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      border-bottom: 1px solid #f0f0f0;
+      transition: background 0.2s;
+    }
+    .tab-item:hover {
+      background: #f8f9fa;
+    }
+    .tab-item:last-child {
+      border-bottom: none;
+    }
+    .tab-info {
+      flex: 1;
+    }
+    .tab-title {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 4px;
+    }
+    .tab-url {
+      color: #666;
+      font-size: 14px;
+      word-break: break-all;
+    }
+    .delete-btn {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: background 0.2s;
+    }
+    .delete-btn:hover {
+      background: #c82333;
+    }
+    .window-group {
+      border: 2px solid #e1e1e1;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      overflow: hidden;
+    }
+    .window-header {
+      background: #f8f9fa;
+      padding: 10px 15px;
+      border-bottom: 1px solid #e1e1e1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .window-label {
+      font-weight: 600;
+      color: #495057;
+    }
+    .window-name-input {
+      flex: 1;
+      padding: 4px 8px;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
-  <div id="container">
-    <label for="input">URLs & Titles of Tabs:</label>
-        <textarea id="input" rows="8" cols="40" placeholder="Enter some text here"></textarea>
-    <label for="toggle">all tabs</label>
-        <input type="checkbox" id="toggle">
-    <label for="left">left tabs</label>
-        <input type="checkbox" id="left">
-    <label for="right">right tabs</label>
-        <input type="checkbox" id="right">
-    <label for="selected">selected tabs</label>
-        <input type="checkbox" id="selected">
-    <br/>
-    <br/>
-    <label for="url">Username to save to:</label>
-        <textarea id="url" rows="2" cols="40">try</textarea>
-    <br/>
-    <br/>
-    <label for="folder">Session Name:</label>
-        <textarea id="folder" rows="2" cols="40"></textarea>
-      <label for="time">time</label>
-        <input type="checkbox" id="time">
-      <label for="browser">chrome</label>
-        <input type="checkbox" id="browser">
-    <br/>
-    <br/>
-    <button id="submit">LogLinktoDisk</button>
-    <br/>
-    <textarea readonly rows="8" cols="40" id="saved"></textarea>
+  <div class="container">
+    <h1>LogLink2Disk</h1>
+
+    <div class="section">
+      <h2>Tab Selection</h2>
+      <div class="checkbox-group">
+        <div class="checkbox-item">
+          <input type="checkbox" id="toggle">
+          <label for="toggle">All Tabs</label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="left">
+          <label for="left">Left Tabs</label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="right">
+          <label for="right">Right Tabs</label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="selected">
+          <label for="selected">Selected Tabs</label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="allwindows">
+          <label for="allwindows">All Windows</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="view-toggle">
+        <label for="input">URLs & Titles of Tabs:</label>
+        <button id="toggleView">View as List</button>
+      </div>
+      <div id="textView">
+        <textarea id="input" rows="12" placeholder="Tab information will appear here..."></textarea>
+      </div>
+      <div id="listView" style="display: none;">
+        <div id="tabList" class="tab-list"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <label for="url">Username to save to:</label>
+      <textarea id="url" rows="2">try</textarea>
+    </div>
+
+    <div class="section">
+      <label for="folder">Session Name:</label>
+      <textarea id="folder" rows="2"></textarea>
+      <div class="checkbox-group">
+        <div class="checkbox-item">
+          <input type="checkbox" id="time">
+          <label for="time">Use Current Time</label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="browser">
+          <label for="browser">Chrome Browser</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="button-group">
+      <button id="submit">Save to LogLink2Disk</button>
+    </div>
+
+    <div class="status-area">
+      <label for="saved">Status:</label>
+      <textarea readonly rows="6" id="saved" placeholder="Status messages will appear here..."></textarea>
+    </div>
   </div>
+
   <script src="dist/popup.js"></script>
 </body>
 </html>

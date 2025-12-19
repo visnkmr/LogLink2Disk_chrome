@@ -2,13 +2,18 @@
 import {getTodayDateTimeString} from './gettodaytime';
 import axios from "axios";
 
-let input = document.getElementById("input") as HTMLInputElement;
+let input = document.getElementById("input") as HTMLTextAreaElement;
 let submit = document.getElementById("submit") as HTMLButtonElement;
+let toggleView = document.getElementById("toggleView") as HTMLButtonElement;
+let textView = document.getElementById("textView") as HTMLDivElement;
+let listView = document.getElementById("listView") as HTMLDivElement;
+let tabList = document.getElementById("tabList") as HTMLDivElement;
 
 let toggle = document.getElementById("toggle") as HTMLInputElement;
 let left = document.getElementById("left") as HTMLInputElement;
 let right = document.getElementById("right")as HTMLInputElement;
 let selectedtabs = document.getElementById("selected")as HTMLInputElement;
+let allwindows = document.getElementById("allwindows") as HTMLInputElement;
 
 let browser = document.getElementById("browser")as HTMLInputElement;
 let time = document.getElementById("time")as HTMLInputElement;
@@ -78,22 +83,211 @@ function updateTextarea() {
           input.value += "URL: " + tab.url + "\nTitle: " + tab.title + "\n\n";
       }
     });
-  }else if (mode === "selected") {
-    // Get all tabs in the current window
-    chrome.tabs.query({currentWindow: true}, function(tabs) {
-      console.log(tabs)
-      // Loop over the tabs array
-      for (let tab of tabs) {
-        // Append the tab URL and title to the textarea value
-        if(tab.highlighted)
-          input.value += "URL: " + tab.url + "\nTitle: " + tab.title + "\n\n";
+   }else if (mode === "selected") {
+     // Get all tabs in the current window
+     chrome.tabs.query({currentWindow: true}, function(tabs) {
+       console.log(tabs)
+       // Loop over the tabs array
+       for (let tab of tabs) {
+         // Append the tab URL and title to the textarea value
+         if(tab.highlighted)
+           input.value += "URL: " + tab.url + "\nTitle: " + tab.title + "\n\n";
+       }
+     });
+   }else if (mode === "allwindows") {
+     // Get all tabs across all windows
+     chrome.tabs.query({}, function(tabs) {
+       console.log(tabs)
+       // Group tabs by windowId
+       const tabsByWindow: { [key: number]: any[] } = {};
+       tabs.forEach(tab => {
+         if (!tabsByWindow[tab.windowId]) {
+           tabsByWindow[tab.windowId] = [];
+         }
+         tabsByWindow[tab.windowId].push(tab);
+       });
+       // For each window, add to textarea
+       for (const windowId in tabsByWindow) {
+         input.value += `Window: Window ${windowId}\n`;
+         tabsByWindow[windowId].forEach(tab => {
+           input.value += "URL: " + tab.url + "\nTitle: " + tab.title + "\n";
+         });
+         input.value += "\n";
+       }
+     });
+   }
+}
+
+// Function to update the tab list view
+function updateTabList() {
+  tabList.innerHTML = "";
+  const text = input.value.trim();
+  if (!text) return;
+
+  if (mode === "allwindows") {
+    // Parse windows
+    const windowBlocks = text.split("\n\n").filter(block => block.trim() && block.includes("Window"));
+    windowBlocks.forEach((block, windowIndex) => {
+      const lines = block.split("\n");
+      const windowLine = lines[0];
+      const windowNameMatch = windowLine.match(/Window: (.+)/);
+      const windowName = windowNameMatch ? windowNameMatch[1] : `Window ${windowIndex + 1}`;
+      const tabLines = lines.slice(1).filter(line => line.startsWith("URL:") || line.startsWith("Title:"));
+
+      const windowGroup = document.createElement("div");
+      windowGroup.className = "window-group";
+
+      const windowHeader = document.createElement("div");
+      windowHeader.className = "window-header";
+      windowHeader.innerHTML = `
+        <span class="window-label">Window:</span>
+        <input type="text" class="window-name-input" value="${windowName}" data-window-index="${windowIndex}">
+      `;
+      windowGroup.appendChild(windowHeader);
+
+      for (let i = 0; i < tabLines.length; i += 2) {
+        const urlLine = tabLines[i];
+        const titleLine = tabLines[i + 1];
+        if (urlLine && titleLine) {
+          const url = urlLine.replace("URL: ", "");
+          const title = titleLine.replace("Title: ", "");
+          const tabItem = document.createElement("div");
+          tabItem.className = "tab-item";
+          tabItem.innerHTML = `
+            <div class="tab-info">
+              <div class="tab-title">${title}</div>
+              <div class="tab-url">${url}</div>
+            </div>
+            <button class="delete-btn" data-window-index="${windowIndex}" data-tab-index="${i / 2}">Delete</button>
+          `;
+          windowGroup.appendChild(tabItem);
+        }
+      }
+
+      tabList.appendChild(windowGroup);
+    });
+  } else {
+    // Original parsing for single window
+    const entries = text.split("\n\n").filter(entry => entry.trim());
+    entries.forEach((entry, index) => {
+      const lines = entry.split("\n");
+      const urlLine = lines.find(line => line.startsWith("URL: "));
+      const titleLine = lines.find(line => line.startsWith("Title: "));
+      const url = urlLine ? urlLine.replace("URL: ", "") : "";
+      const title = titleLine ? titleLine.replace("Title: ", "") : "";
+
+      const tabItem = document.createElement("div");
+      tabItem.className = "tab-item";
+      tabItem.innerHTML = `
+        <div class="tab-info">
+          <div class="tab-title">${title}</div>
+          <div class="tab-url">${url}</div>
+        </div>
+        <button class="delete-btn" data-index="${index}">Delete</button>
+      `;
+      tabList.appendChild(tabItem);
+    });
+  }
+
+  // Add event listeners to delete buttons
+  document.querySelectorAll(".delete-btn").forEach(btn => {
+    btn.addEventListener("click", function(this: HTMLElement) {
+      if (mode === "allwindows") {
+        const windowIndex = parseInt(this.dataset.windowIndex!);
+        const tabIndex = parseInt(this.dataset.tabIndex!);
+        deleteTabFromWindow(windowIndex, tabIndex);
+      } else {
+        const index = parseInt(this.dataset.index!);
+        deleteTab(index);
       }
     });
+  });
+
+  // Add event listeners to window name inputs
+  document.querySelectorAll(".window-name-input").forEach(input => {
+    input.addEventListener("input", function(this: HTMLInputElement) {
+      const windowIndex = parseInt(this.dataset.windowIndex!);
+      updateWindowName(windowIndex, this.value);
+    });
+  });
+}
+
+// Function to delete a tab from the list
+function deleteTab(index: number) {
+  const text = input.value.trim();
+  const entries = text.split("\n\n").filter(entry => entry.trim());
+  entries.splice(index, 1);
+  input.value = entries.join("\n\n");
+  if (entries.length === 0) {
+    input.value = "";
+  }
+  updateTabList();
+}
+
+// Function to delete a tab from a specific window
+function deleteTabFromWindow(windowIndex: number, tabIndex: number) {
+  const text = input.value.trim();
+  const windowBlocks = text.split("\n\n").filter(block => block.trim() && block.includes("Window"));
+  if (windowBlocks[windowIndex]) {
+    const lines = windowBlocks[windowIndex].split("\n");
+    const header = lines[0];
+    const tabLines = lines.slice(1).filter(line => line.startsWith("URL:") || line.startsWith("Title:"));
+    // Remove the tab (2 lines: URL and Title)
+    tabLines.splice(tabIndex * 2, 2);
+    // Rebuild the block
+    let newBlock = header + "\n";
+    for (let i = 0; i < tabLines.length; i += 2) {
+      if (tabLines[i] && tabLines[i + 1]) {
+        newBlock += tabLines[i] + "\n" + tabLines[i + 1] + "\n";
+      }
+    }
+    newBlock = newBlock.trim();
+    if (tabLines.length === 0) {
+      // Remove the window block if no tabs left
+      windowBlocks.splice(windowIndex, 1);
+    } else {
+      windowBlocks[windowIndex] = newBlock;
+    }
+    input.value = windowBlocks.join("\n\n");
+    if (input.value && windowBlocks.length > 0) input.value += "\n\n";
+    updateTabList();
   }
 }
 
+// Function to update window name
+function updateWindowName(windowIndex: number, newName: string) {
+  const text = input.value.trim();
+  const windowBlocks = text.split("\n\n").filter(block => block.trim() && block.includes("Window"));
+  if (windowBlocks[windowIndex]) {
+    const lines = windowBlocks[windowIndex].split("\n");
+    lines[0] = `Window: ${newName}`;
+    windowBlocks[windowIndex] = lines.join("\n");
+    input.value = windowBlocks.join("\n\n");
+    if (input.value) input.value += "\n\n";
+  }
+}
+
+// Toggle view functionality
+let isListView = false;
+toggleView.addEventListener("click", function() {
+  isListView = !isListView;
+  if (isListView) {
+    textView.style.display = "none";
+    listView.style.display = "block";
+    toggleView.textContent = "View as Text";
+    updateTabList();
+  } else {
+    listView.style.display = "none";
+    textView.style.display = "block";
+    toggleView.textContent = "View as List";
+  }
+});
+
 // Call the function to initialize the textarea value
 updateTextarea();
+if (isListView) {
+  updateTabList();
+}
 
 // Add a change event listener to the checkbox
 toggle.addEventListener("change", function() {
@@ -108,6 +302,9 @@ toggle.addEventListener("change", function() {
 
   // Update the textarea value
   updateTextarea();
+  if (isListView) {
+    updateTabList();
+  }
 });
 
 // Add a change event listener to the checkbox
@@ -123,6 +320,9 @@ left.addEventListener("change", function() {
 
   // Update the textarea value
   updateTextarea();
+  if (isListView) {
+    updateTabList();
+  }
 });
 
 // Add a change event listener to the checkbox
@@ -168,6 +368,9 @@ right.addEventListener("change", function() {
 
   // Update the textarea value
   updateTextarea();
+  if (isListView) {
+    updateTabList();
+  }
 });
 
 // Add a change event listener to the checkbox
@@ -183,6 +386,27 @@ selectedtabs.addEventListener("change", function() {
 
   // Update the textarea value
   updateTextarea();
+  if (isListView) {
+    updateTabList();
+  }
+});
+
+// Add a change event listener to the checkbox
+allwindows.addEventListener("change", function() {
+  // Check the checkbox state
+  if (allwindows.checked) {
+    // Change the mode to "allwindows"
+    mode = "allwindows";
+  } else {
+    // Change the mode to "active"
+    mode = "active";
+  }
+
+  // Update the textarea value
+  updateTextarea();
+  if (isListView) {
+    updateTabList();
+  }
 });
 
 // Add a click event listener to the button
