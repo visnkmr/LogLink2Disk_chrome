@@ -12,6 +12,11 @@ const Popup: React.FC = () => {
   const [exportFormat, setExportFormat] = useState('text');
   const [windowTabs, setWindowTabs] = useState<{id: number, name: string, tabs: chrome.tabs.Tab[]}[]>([]);
   const [selectedWindow, setSelectedWindow] = useState(0);
+  // Theme toggle
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDark);
+  }, [isDark]);
+
   const [useCurrentTime, setUseCurrentTime] = useState(true);
   const [useChromeBrowser, setUseChromeBrowser] = useState(false);
 
@@ -72,10 +77,7 @@ const Popup: React.FC = () => {
     setSelectedWindow(windowIndex);
   };
 
-  // Theme toggle
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', isDark);
-  }, [isDark]);
+
 
   // Folder name logic
   useEffect(() => {
@@ -280,21 +282,21 @@ const Popup: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white p-4 flex flex-col gap-4 dark:from-gray-100 dark:to-gray-200 dark:text-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-white p-4 flex flex-col gap-4">
       {/* Header */}
-      <div className="bg-gray-800 dark:bg-gray-200 rounded-lg shadow-lg p-4 flex justify-between items-center">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 flex justify-between items-center">
         <h1 className="text-2xl font-bold text-green-400">🚀 LogLink2Disk</h1>
         <button
           onClick={() => setIsDark(!isDark)}
-          className="bg-gray-700 dark:bg-gray-300 rounded px-4 py-2 hover:scale-105 transition text-white dark:text-gray-900"
+          className="bg-blue-600 hover:bg-blue-500 text-white rounded px-4 py-2 transition"
         >
-          {isDark ? 'Toggle Light' : 'Toggle Dark'}
+          {isDark ? '☀️ Light' : '🌙 Dark'}
         </button>
       </div>
 
        {/* Tab Selection */}
-       <div className="bg-gray-800 dark:bg-gray-200 rounded-lg shadow-lg p-4">
-         <h3 className="text-lg font-semibold mb-4">Tab Selection</h3>
+       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4">
+         <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Tab Selection</h3>
          <div className="grid grid-cols-2 gap-4">
            {[
              { key: 'active', label: 'Active Tab', id: 'toggle' },
@@ -318,7 +320,7 @@ const Popup: React.FC = () => {
        </div>
 
       {/* Content Area */}
-      <div className="bg-gray-800 dark:bg-gray-200 rounded-lg shadow-lg p-4 flex-1 flex flex-col gap-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 flex-1 flex flex-col gap-4">
         <div className="flex justify-center gap-2">
           <button
             onClick={() => setView('text')}
@@ -342,7 +344,7 @@ const Popup: React.FC = () => {
           <textarea
             value={data}
             readOnly
-            className="w-full h-48 bg-gray-900 dark:bg-gray-100 border border-gray-600 dark:border-gray-400 rounded p-2 text-gray-300 dark:text-gray-800 font-mono"
+            className="w-full h-48 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded p-2 text-gray-900 dark:text-gray-100 font-mono"
             placeholder="Tab data will appear here..."
           />
         )}
@@ -354,7 +356,11 @@ const Popup: React.FC = () => {
                 {windowTabs.map((win, i) => (
                   <div
                     key={win.id}
-                    className={`flex items-center gap-2 px-3 py-2 rounded bg-gray-700 dark:bg-gray-300 text-white dark:text-gray-900 cursor-pointer whitespace-nowrap ${i === selectedWindow ? 'bg-green-500' : ''}`}
+                    className={`flex items-center gap-2 px-3 py-2 rounded cursor-pointer whitespace-nowrap ${
+                      i === selectedWindow
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-200 dark:bg-gray-600 text-gray-900 dark:text-gray-100'
+                    }`}
                     onClick={() => selectWindow(i)}
                   >
                     <span>{win.name}</span>
@@ -371,16 +377,16 @@ const Popup: React.FC = () => {
                 ))}
               </div>
             )}
-            <div className="max-h-64 overflow-y-auto border border-gray-600 dark:border-gray-400 rounded bg-gray-900 dark:bg-gray-100 p-2">
+            <div className="max-h-64 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-700 p-2">
               {mode === 'allwindows' ? (
                 windowTabs[selectedWindow]?.tabs.map((tab, i) => (
-                  <div key={tab.id} className="flex justify-between items-center p-2 border-b border-gray-700 dark:border-gray-300">
+                  <div key={tab.id} className="flex justify-between items-center p-2 border-b border-gray-300 dark:border-gray-600">
                     <div>
-                      <div className="font-semibold">{tab.title}</div>
-                      <div className="text-sm text-gray-400 dark:text-gray-600">{tab.url}</div>
+                      <div className="font-semibold text-gray-900 dark:text-white">{tab.title}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">{tab.url}</div>
                     </div>
                     <button
-                      className="bg-red-500 text-white px-2 py-1 rounded"
+                      className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded transition"
                       onClick={() => deleteTabFromWindow(selectedWindow, i)}
                     >
                       Delete
@@ -393,13 +399,13 @@ const Popup: React.FC = () => {
                   const url = lines[0]?.replace('URL: ', '');
                   const title = lines[1]?.replace('Title: ', '');
                   return (
-                    <div key={i} className="flex justify-between items-center p-2 border-b border-gray-700 dark:border-gray-300">
+                    <div key={i} className="flex justify-between items-center p-2 border-b border-gray-300 dark:border-gray-600">
                       <div>
-                        <div className="font-semibold">{title}</div>
-                        <div className="text-sm text-gray-400 dark:text-gray-600">{url}</div>
+                        <div className="font-semibold text-gray-900 dark:text-white">{title}</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">{url}</div>
                       </div>
                       <button
-                        className="bg-red-500 text-white px-2 py-1 rounded"
+                        className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded transition"
                         onClick={() => deleteTab(i)}
                       >
                         Delete
@@ -414,17 +420,17 @@ const Popup: React.FC = () => {
       </div>
 
       {/* Controls */}
-      <div className="bg-gray-800 dark:bg-gray-200 rounded-lg shadow-lg p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4">
          <div className="flex gap-4 mb-4">
            <div className="flex-1">
              <label className="block text-sm font-medium mb-2">Session Name:</label>
-             <input
-               type="text"
-               value={folder}
-               onChange={(e) => setFolder(e.target.value)}
-               placeholder="Session Name"
-               className="w-full bg-gray-900 dark:bg-gray-100 border border-gray-600 dark:border-gray-400 rounded px-3 py-2 text-white dark:text-gray-900"
-             />
+              <input
+                type="text"
+                value={folder}
+                onChange={(e) => setFolder(e.target.value)}
+                placeholder="Session Name"
+                className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-gray-900 dark:text-gray-100"
+              />
              <div className="flex gap-4 mt-2">
                <label className="flex items-center gap-2">
                  <input
@@ -446,13 +452,13 @@ const Popup: React.FC = () => {
            </div>
            <div className="flex-1">
              <label className="block text-sm font-medium mb-2">Username:</label>
-             <input
-               type="text"
-               value={url}
-               onChange={(e) => setUrl(e.target.value)}
-               placeholder="Username"
-               className="w-full bg-gray-900 dark:bg-gray-100 border border-gray-600 dark:border-gray-400 rounded px-3 py-2 text-white dark:text-gray-900"
-             />
+              <input
+                type="text"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="Username"
+                className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-gray-900 dark:text-gray-100"
+              />
            </div>
          </div>
         <div className="flex justify-between items-center">
@@ -460,7 +466,7 @@ const Popup: React.FC = () => {
             <select
               value={exportFormat}
               onChange={(e) => setExportFormat(e.target.value)}
-              className="bg-gray-900 dark:bg-gray-100 border border-gray-600 dark:border-gray-400 rounded px-3 py-2 text-white dark:text-gray-900"
+              className="bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-gray-900 dark:text-gray-100"
             >
               <option value="text">📄 Text</option>
               <option value="csv">📊 CSV</option>
