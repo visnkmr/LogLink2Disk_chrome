@@ -1,21 +1,92 @@
 import React, { useState, useEffect } from 'react';
 import jsPDF from 'jspdf';
+import { getTodayDateTimeString } from '../gettodaytime';
 
 const Popup: React.FC = () => {
   const [isDark, setIsDark] = useState(false);
   const [mode, setMode] = useState('active');
   const [view, setView] = useState<'text' | 'list'>('text');
   const [data, setData] = useState('');
-  const [folder, setFolder] = useState('');
+  const [folder, setFolder] = useState(getTodayDateTimeString());
   const [url, setUrl] = useState('try');
   const [exportFormat, setExportFormat] = useState('text');
   const [windowTabs, setWindowTabs] = useState<{id: number, name: string, tabs: chrome.tabs.Tab[]}[]>([]);
   const [selectedWindow, setSelectedWindow] = useState(0);
+  const [useCurrentTime, setUseCurrentTime] = useState(true);
+  const [useChromeBrowser, setUseChromeBrowser] = useState(false);
+
+  const deleteTab = (index: number) => {
+    const text = data.trim();
+    const entries = text.split('\n\n').filter(entry => entry.trim());
+    entries.splice(index, 1);
+    const newData = entries.length > 0 ? entries.join('\n\n') : '';
+    setData(newData);
+  };
+
+  const deleteTabFromWindow = (windowIndex: number, tabIndex: number) => {
+    if (windowTabs[windowIndex]) {
+      const updatedWindowTabs = [...windowTabs];
+      updatedWindowTabs[windowIndex].tabs.splice(tabIndex, 1);
+      setWindowTabs(updatedWindowTabs);
+
+      // Update the data string as well
+      const text = data.trim();
+      const windowBlocks = text.split('\n\n').filter(block => block.trim() && block.includes('Window:'));
+      if (windowBlocks[windowIndex]) {
+        const lines = windowBlocks[windowIndex].split('\n');
+        const header = lines[0];
+        const tabLines = lines.slice(1).filter(line => line.startsWith('URL:') || line.startsWith('Title:'));
+        tabLines.splice(tabIndex * 2, 2); // Remove URL and Title lines
+        let newBlock = header;
+        if (tabLines.length > 0) {
+          newBlock += '\n' + tabLines.join('\n');
+        }
+        windowBlocks[windowIndex] = newBlock;
+        const newData = windowBlocks.join('\n\n');
+        setData(newData);
+      }
+    }
+  };
+
+  const deleteWindow = (windowIndex: number) => {
+    const updatedWindowTabs = [...windowTabs];
+    updatedWindowTabs.splice(windowIndex, 1);
+    setWindowTabs(updatedWindowTabs);
+
+    // Update data string
+    const text = data.trim();
+    const windowBlocks = text.split('\n\n').filter(block => block.trim() && block.includes('Window:'));
+    windowBlocks.splice(windowIndex, 1);
+    const newData = windowBlocks.join('\n\n');
+    setData(newData);
+
+    // Adjust selectedWindow if necessary
+    if (selectedWindow >= windowIndex && selectedWindow > 0) {
+      setSelectedWindow(selectedWindow - 1);
+    } else if (updatedWindowTabs.length === 0) {
+      setSelectedWindow(0);
+    }
+  };
+
+  const selectWindow = (windowIndex: number) => {
+    setSelectedWindow(windowIndex);
+  };
 
   // Theme toggle
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDark);
   }, [isDark]);
+
+  // Folder name logic
+  useEffect(() => {
+    let newFolder = '';
+    if (useCurrentTime) {
+      newFolder = getTodayDateTimeString();
+    } else if (useChromeBrowser) {
+      newFolder = 'chrome';
+    }
+    setFolder(newFolder);
+  }, [useCurrentTime, useChromeBrowser]);
 
   // Fetch data on mode change
   useEffect(() => {
@@ -50,6 +121,14 @@ const Popup: React.FC = () => {
         }));
         setWindowTabs(windowList);
         setSelectedWindow(0);
+        // Format data with window separators
+        const formatted = Object.entries(grouped).map(([windowId, windowTabs]) => {
+          const windowHeader = `Window: Window ${windowId}`;
+          const tabLines = windowTabs.map(tab => `URL: ${tab.url}\nTitle: ${tab.title}`).join('\n');
+          return `${windowHeader}\n${tabLines}`;
+        }).join('\n\n');
+        setData(formatted);
+        return;
       }
       const formatted = tabs.map(t => `URL: ${t.url}\nTitle: ${t.title}`).join('\n\n');
       setData(formatted);
@@ -106,9 +185,59 @@ const Popup: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  const handleSave = () => {
-    // Save logic - similar to original
-    console.log('Save:', data, folder, url);
+  const handleSave = async () => {
+    try {
+      let tabs: chrome.tabs.Tab[] = [];
+      if (mode === 'active') {
+        tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      } else if (mode === 'all') {
+        tabs = await chrome.tabs.query({ currentWindow: true });
+      } else if (mode === 'left') {
+        const allTabs = await chrome.tabs.query({ currentWindow: true });
+        const activeIndex = allTabs.findIndex(t => t.active);
+        tabs = allTabs.slice(0, activeIndex);
+      } else if (mode === 'right') {
+        const allTabs = await chrome.tabs.query({ currentWindow: true });
+        const activeIndex = allTabs.findIndex(t => t.active);
+        tabs = allTabs.slice(activeIndex + 1);
+      } else if (mode === 'selected') {
+        tabs = await chrome.tabs.query({ highlighted: true, currentWindow: true });
+      } else if (mode === 'allwindows') {
+        tabs = await chrome.tabs.query({});
+      }
+
+      const tablist = tabs.map(tab => ({
+        title: tab.title || '',
+        url: tab.url || ''
+      }));
+
+      const dataToSend = {
+        sessionname: folder,
+        browsername: "chromium based",
+        tablist
+      };
+
+      const encodedParams = new URLSearchParams();
+      encodedParams.set('uid', url);
+      encodedParams.set('datatoadd', JSON.stringify(dataToSend));
+
+      const response = await fetch('https://listallfrompscale.vercel.app/api/update', {
+        method: 'POST',
+        body: encodedParams,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      });
+
+      if (response.ok) {
+        alert('Tabs saved successfully!');
+      } else {
+        alert('Failed to save tabs.');
+      }
+    } catch (error) {
+      console.error('Error saving tabs:', error);
+      alert('Error saving tabs.');
+    }
   };
 
   const convertToCSV = (text: string): string => {
@@ -151,41 +280,42 @@ const Popup: React.FC = () => {
   };
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white p-4 flex flex-col gap-4 dark:from-gray-100 dark:to-gray-200 dark:text-gray-900 ${isDark ? 'dark' : ''}`}>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white p-4 flex flex-col gap-4 dark:from-gray-100 dark:to-gray-200 dark:text-gray-900">
       {/* Header */}
       <div className="bg-gray-800 dark:bg-gray-200 rounded-lg shadow-lg p-4 flex justify-between items-center">
         <h1 className="text-2xl font-bold text-green-400">🚀 LogLink2Disk</h1>
         <button
           onClick={() => setIsDark(!isDark)}
-          className="bg-gray-700 dark:bg-gray-300 rounded-full p-2 hover:scale-105 transition"
+          className="bg-gray-700 dark:bg-gray-300 rounded px-4 py-2 hover:scale-105 transition text-white dark:text-gray-900"
         >
-          {isDark ? '☀️' : '🌙'}
+          {isDark ? 'Toggle Light' : 'Toggle Dark'}
         </button>
       </div>
 
-      {/* Tab Selection */}
-      <div className="bg-gray-800 dark:bg-gray-200 rounded-lg shadow-lg p-4">
-        <div className="flex gap-2 flex-wrap">
-          {[
-            { key: 'active', label: '📌 Active Tab' },
-            { key: 'all', label: '📋 All Tabs' },
-            { key: 'left', label: '⬅️ Left Tabs' },
-            { key: 'right', label: '➡️ Right Tabs' },
-            { key: 'selected', label: '✅ Selected Tabs' },
-            { key: 'allwindows', label: '🖼️ All Windows' },
-          ].map((opt) => (
-            <button
-              key={opt.key}
-              onClick={() => setMode(opt.key)}
-              className={`bg-gray-700 dark:bg-gray-300 border border-gray-600 dark:border-gray-400 rounded px-3 py-2 hover:bg-green-500 transition ${
-                mode === opt.key ? 'bg-green-500' : ''
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      </div>
+       {/* Tab Selection */}
+       <div className="bg-gray-800 dark:bg-gray-200 rounded-lg shadow-lg p-4">
+         <h3 className="text-lg font-semibold mb-4">Tab Selection</h3>
+         <div className="grid grid-cols-2 gap-4">
+           {[
+             { key: 'active', label: 'Active Tab', id: 'toggle' },
+             { key: 'all', label: 'All Tabs', id: 'toggle' },
+             { key: 'left', label: 'Left Tabs', id: 'left' },
+             { key: 'right', label: 'Right Tabs', id: 'right' },
+             { key: 'selected', label: 'Selected Tabs', id: 'selected' },
+             { key: 'allwindows', label: 'All Windows', id: 'allwindows' },
+           ].map((opt) => (
+             <label key={opt.key} className="flex items-center gap-2 cursor-pointer">
+               <input
+                 type="checkbox"
+                 checked={mode === opt.key}
+                 onChange={() => setMode(opt.key)}
+                 className="w-4 h-4"
+               />
+               <span>{opt.label}</span>
+             </label>
+           ))}
+         </div>
+       </div>
 
       {/* Content Area */}
       <div className="bg-gray-800 dark:bg-gray-200 rounded-lg shadow-lg p-4 flex-1 flex flex-col gap-4">
@@ -225,9 +355,18 @@ const Popup: React.FC = () => {
                   <div
                     key={win.id}
                     className={`flex items-center gap-2 px-3 py-2 rounded bg-gray-700 dark:bg-gray-300 text-white dark:text-gray-900 cursor-pointer whitespace-nowrap ${i === selectedWindow ? 'bg-green-500' : ''}`}
+                    onClick={() => selectWindow(i)}
                   >
                     <span>{win.name}</span>
-                    <span className="cursor-pointer text-red-500">×</span>
+                    <span
+                      className="cursor-pointer text-red-500"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteWindow(i);
+                      }}
+                    >
+                      ×
+                    </span>
                   </div>
                 ))}
               </div>
@@ -240,7 +379,12 @@ const Popup: React.FC = () => {
                       <div className="font-semibold">{tab.title}</div>
                       <div className="text-sm text-gray-400 dark:text-gray-600">{tab.url}</div>
                     </div>
-                    <button className="bg-red-500 text-white px-2 py-1 rounded">Delete</button>
+                    <button
+                      className="bg-red-500 text-white px-2 py-1 rounded"
+                      onClick={() => deleteTabFromWindow(selectedWindow, i)}
+                    >
+                      Delete
+                    </button>
                   </div>
                 ))
               ) : (
@@ -254,7 +398,12 @@ const Popup: React.FC = () => {
                         <div className="font-semibold">{title}</div>
                         <div className="text-sm text-gray-400 dark:text-gray-600">{url}</div>
                       </div>
-                      <button className="bg-red-500 text-white px-2 py-1 rounded">Delete</button>
+                      <button
+                        className="bg-red-500 text-white px-2 py-1 rounded"
+                        onClick={() => deleteTab(i)}
+                      >
+                        Delete
+                      </button>
                     </div>
                   );
                 })
@@ -266,22 +415,46 @@ const Popup: React.FC = () => {
 
       {/* Controls */}
       <div className="bg-gray-800 dark:bg-gray-200 rounded-lg shadow-lg p-4">
-        <div className="flex gap-4 mb-4">
-          <input
-            type="text"
-            value={folder}
-            onChange={(e) => setFolder(e.target.value)}
-            placeholder="Session Name"
-            className="flex-1 bg-gray-900 dark:bg-gray-100 border border-gray-600 dark:border-gray-400 rounded px-3 py-2 text-white dark:text-gray-900"
-          />
-          <input
-            type="text"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="Username"
-            className="flex-1 bg-gray-900 dark:bg-gray-100 border border-gray-600 dark:border-gray-400 rounded px-3 py-2 text-white dark:text-gray-900"
-          />
-        </div>
+         <div className="flex gap-4 mb-4">
+           <div className="flex-1">
+             <label className="block text-sm font-medium mb-2">Session Name:</label>
+             <input
+               type="text"
+               value={folder}
+               onChange={(e) => setFolder(e.target.value)}
+               placeholder="Session Name"
+               className="w-full bg-gray-900 dark:bg-gray-100 border border-gray-600 dark:border-gray-400 rounded px-3 py-2 text-white dark:text-gray-900"
+             />
+             <div className="flex gap-4 mt-2">
+               <label className="flex items-center gap-2">
+                 <input
+                   type="checkbox"
+                   checked={useCurrentTime}
+                   onChange={(e) => setUseCurrentTime(e.target.checked)}
+                 />
+                 <span>Use Current Time</span>
+               </label>
+               <label className="flex items-center gap-2">
+                 <input
+                   type="checkbox"
+                   checked={useChromeBrowser}
+                   onChange={(e) => setUseChromeBrowser(e.target.checked)}
+                 />
+                 <span>Chrome Browser</span>
+               </label>
+             </div>
+           </div>
+           <div className="flex-1">
+             <label className="block text-sm font-medium mb-2">Username:</label>
+             <input
+               type="text"
+               value={url}
+               onChange={(e) => setUrl(e.target.value)}
+               placeholder="Username"
+               className="w-full bg-gray-900 dark:bg-gray-100 border border-gray-600 dark:border-gray-400 rounded px-3 py-2 text-white dark:text-gray-900"
+             />
+           </div>
+         </div>
         <div className="flex justify-between items-center">
           <div className="flex gap-2">
             <select
