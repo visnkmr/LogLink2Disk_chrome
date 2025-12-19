@@ -4,35 +4,86 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LogLink2Disk - Save Tab Links</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      margin: 0;
-      padding: 20px;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-    }
-    .container {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-      padding: 30px;
-      max-width: 600px;
-      width: 100%;
-      margin-top: 20px;
-    }
-    h1 {
-      color: #333;
-      text-align: center;
-      margin-bottom: 30px;
-      font-size: 2em;
-    }
-    .section {
-      margin-bottom: 25px;
-    }
+   <style>
+     :root {
+       --bg-body: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+       --bg-container: #ffffff;
+       --color-text: #333;
+       --color-h1: #212529;
+       --color-h2: #555;
+       --color-label: #333;
+       --bg-input: #f8f9fa;
+       --border-input: #ced4da;
+       --bg-checkbox: #ffffff;
+       --border-checkbox: #dee2e6;
+       --bg-button: #007bff;
+       --bg-tab-list: #ffffff;
+       --color-tab-title: #333;
+       --color-tab-url: #666;
+       --bg-window-header: #f8f9fa;
+       --bg-status: #f8f9fa;
+     }
+     :root.dark {
+       --bg-body: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+       --bg-container: #2b2b2b;
+       --color-text: #ffffff;
+       --color-h1: #ffffff;
+       --color-h2: #ffffff;
+       --color-label: #ffffff;
+       --bg-input: #3a3a3a;
+       --border-input: #555;
+       --bg-checkbox: #3a3a3a;
+       --border-checkbox: #555;
+       --bg-button: #007bff;
+       --bg-tab-list: #3a3a3a;
+       --color-tab-title: #ffffff;
+       --color-tab-url: #ffffff;
+       --bg-window-header: #404040;
+       --bg-status: #3a3a3a;
+     }
+     body {
+       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+       background: var(--bg-body);
+       margin: 0;
+       padding: 0;
+       min-height: 100vh;
+       display: flex;
+       justify-content: center;
+       align-items: stretch;
+       color: var(--color-text);
+     }
+     .container {
+       background: var(--bg-container);
+       border-radius: 0;
+       box-shadow: none;
+       padding: 20px;
+       width: 100%;
+       height: 100vh;
+       overflow-y: auto;
+     }
+     h1 {
+       color: var(--color-h1);
+       text-align: center;
+       margin-bottom: 40px;
+       font-size: 2.2em;
+       font-weight: 700;
+     }
+     h2 {
+       color: var(--color-h2);
+       margin-bottom: 10px;
+       font-size: 1.2em;
+       border-bottom: 2px solid #f0f0f0;
+       padding-bottom: 5px;
+     }
+     label {
+       display: block;
+       margin-bottom: 8px;
+       font-weight: 500;
+       color: var(--color-label);
+     }
+     .section {
+       margin-bottom: 32px;
+     }
     .section h2 {
       color: #555;
       margin-bottom: 10px;
@@ -46,40 +97,46 @@
       font-weight: 500;
       color: #333;
     }
-    textarea, input[type="text"] {
-      width: 100%;
-      padding: 12px;
-      border: 2px solid #e1e1e1;
-      border-radius: 8px;
-      font-size: 14px;
-      resize: vertical;
-      box-sizing: border-box;
-      transition: border-color 0.3s;
-    }
-    textarea:focus, input[type="text"]:focus {
-      outline: none;
-      border-color: #667eea;
-    }
+     textarea, input[type="text"] {
+       width: 100%;
+       padding: 14px 16px;
+       border: 1px solid var(--border-input);
+       border-radius: 10px;
+       font-size: 14px;
+       resize: vertical;
+       box-sizing: border-box;
+       transition: all 0.3s ease;
+       background: var(--bg-input);
+       color: var(--color-text);
+     }
+     textarea:focus, input[type="text"]:focus {
+       outline: none;
+       border-color: #007bff;
+       background: #ffffff;
+       box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+     }
     .checkbox-group {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 15px;
       margin-bottom: 20px;
     }
-    .checkbox-item {
-      display: flex;
-      align-items: center;
-      background: #f8f9fa;
-      padding: 12px;
-      border-radius: 8px;
-      border: 2px solid #e1e1e1;
-      transition: all 0.3s;
-      cursor: pointer;
-    }
-    .checkbox-item:hover {
-      background: #e9ecef;
-      border-color: #667eea;
-    }
+     .checkbox-item {
+       display: flex;
+       align-items: center;
+       background: var(--bg-checkbox);
+       padding: 14px 16px;
+       border-radius: 12px;
+       border: 1px solid var(--border-checkbox);
+       transition: all 0.3s ease;
+       cursor: pointer;
+       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+     }
+     .checkbox-item:hover {
+       background: #f8f9fa;
+       border-color: #007bff;
+       box-shadow: 0 2px 6px rgba(0,123,255,0.15);
+     }
     .checkbox-item input[type="checkbox"] {
       margin-right: 8px;
       transform: scale(1.2);
@@ -93,34 +150,37 @@
       justify-content: center;
       margin: 30px 0;
     }
-    button {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border: none;
-      padding: 15px 30px;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-    }
+     button {
+       background: #007bff;
+       color: white;
+       border: none;
+       padding: 16px 32px;
+       border-radius: 12px;
+       font-size: 16px;
+       font-weight: 600;
+       cursor: pointer;
+       transition: all 0.3s ease;
+       box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
+     }
+     button:hover {
+       background: #0056b3;
+       transform: translateY(-1px);
+       box-shadow: 0 4px 16px rgba(0, 123, 255, 0.3);
+     }
     button:active {
       transform: translateY(0);
     }
-    .status-area {
-      background: #f8f9fa;
-      border-radius: 8px;
-      padding: 15px;
-      margin-top: 20px;
-    }
-    .status-area textarea {
-      background: white;
-      border: 1px solid #dee2e6;
-    }
+     .status-area {
+       background: var(--bg-status);
+       border-radius: 8px;
+       padding: 15px;
+       margin-top: 20px;
+     }
+     .status-area textarea {
+       background: var(--bg-input);
+       border: 1px solid var(--border-input);
+       color: var(--color-text);
+     }
     .view-toggle {
       display: flex;
       justify-content: space-between;
@@ -140,83 +200,151 @@
     .view-toggle button:hover {
       background: #5a6268;
     }
-    .tab-list {
-      max-height: 400px;
-      overflow-y: auto;
-      border: 1px solid #e1e1e1;
-      border-radius: 8px;
-      background: white;
-    }
-    .tab-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 15px;
-      border-bottom: 1px solid #f0f0f0;
-      transition: background 0.2s;
-    }
-    .tab-item:hover {
-      background: #f8f9fa;
-    }
-    .tab-item:last-child {
-      border-bottom: none;
-    }
-    .tab-info {
-      flex: 1;
-    }
-    .tab-title {
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 4px;
-    }
-    .tab-url {
-      color: #666;
-      font-size: 14px;
-      word-break: break-all;
-    }
-    .delete-btn {
-      background: #dc3545;
-      color: white;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-      transition: background 0.2s;
-    }
-    .delete-btn:hover {
-      background: #c82333;
-    }
+     .tab-list {
+       max-height: 400px;
+       overflow-y: auto;
+       border: 1px solid var(--border-input);
+       border-radius: 8px;
+       background: var(--bg-tab-list);
+     }
+     .tab-item {
+       display: flex;
+       justify-content: space-between;
+       align-items: center;
+       padding: 15px;
+       border-bottom: 1px solid var(--border-input);
+       transition: background 0.2s;
+     }
+     .tab-item:hover {
+       background: var(--bg-input);
+     }
+     .tab-item:last-child {
+       border-bottom: none;
+     }
+     .tab-info {
+       flex: 1;
+     }
+     .tab-title {
+       font-weight: 600;
+       color: var(--color-tab-title);
+       margin-bottom: 4px;
+     }
+     .tab-url {
+       color: var(--color-tab-url);
+       font-size: 14px;
+       word-break: break-all;
+     }
+     .delete-btn, .delete-window-btn {
+       background: #dc3545;
+       color: white;
+       border: none;
+       padding: 6px 12px;
+       border-radius: 4px;
+       cursor: pointer;
+       font-size: 12px;
+       transition: background 0.2s;
+     }
+     .delete-btn:hover, .delete-window-btn:hover {
+       background: #c82333;
+     }
     .window-group {
       border: 2px solid #e1e1e1;
       border-radius: 8px;
       margin-bottom: 15px;
       overflow: hidden;
     }
-    .window-header {
-      background: #f8f9fa;
-      padding: 10px 15px;
-      border-bottom: 1px solid #e1e1e1;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+     .window-header {
+       background: var(--bg-window-header);
+       padding: 10px 15px;
+       border-bottom: 1px solid var(--border-input);
+       display: flex;
+       align-items: center;
+       gap: 10px;
+     }
     .window-label {
       font-weight: 600;
       color: #495057;
     }
-    .window-name-input {
-      flex: 1;
-      padding: 4px 8px;
-      border: 1px solid #ced4da;
-      border-radius: 4px;
-      font-size: 14px;
-    }
+     .window-name-input {
+       flex: 1;
+       padding: 4px 8px;
+       border: 1px solid var(--border-input);
+       border-radius: 4px;
+       font-size: 14px;
+       background: var(--bg-input);
+       color: var(--color-text);
+     }
+     .theme-toggle {
+       display: flex;
+       justify-content: space-between;
+       align-items: center;
+     }
+     .theme-btn {
+       background: var(--bg-button);
+       color: white;
+       border: none;
+       padding: 8px 16px;
+       border-radius: 8px;
+       font-size: 14px;
+       cursor: pointer;
+       transition: background 0.3s;
+     }
+     .theme-btn:hover {
+       background: #0056b3;
+     }
+     .window-tabs {
+       display: flex;
+       flex-wrap: wrap;
+       gap: 5px;
+       margin-bottom: 10px;
+       border-bottom: 1px solid var(--border-input);
+       padding-bottom: 10px;
+     }
+     .window-tab {
+       background: var(--bg-checkbox);
+       border: 1px solid var(--border-checkbox);
+       border-radius: 6px;
+       padding: 8px 12px;
+       cursor: pointer;
+       display: flex;
+       align-items: center;
+       gap: 8px;
+       transition: background 0.3s;
+     }
+     .window-tab.active {
+       background: var(--bg-button);
+       color: white;
+     }
+     .window-tab:hover {
+       background: var(--bg-input);
+     }
+     .close-x, .edit-icon {
+       color: #dc3545;
+       font-weight: bold;
+       cursor: pointer;
+       margin-left: 5px;
+     }
+     .close-x:hover, .edit-icon:hover {
+       color: #c82333;
+     }
+     .window-tab span:first-child {
+       cursor: text;
+     }
+     .tab-title {
+       cursor: text;
+     }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>LogLink2Disk</h1>
+
+    <div class="section">
+      <div class="theme-toggle">
+        <label for="themeSwitch">Theme:</label>
+        <button id="themeToggle" class="theme-btn">Toggle Dark</button>
+      </div>
+    </div>
 
     <div class="section">
       <h2>Tab Selection</h2>
@@ -252,9 +380,10 @@
       <div id="textView">
         <textarea id="input" rows="12" placeholder="Tab information will appear here..."></textarea>
       </div>
-      <div id="listView" style="display: none;">
-        <div id="tabList" class="tab-list"></div>
-      </div>
+       <div id="listView" style="display: none;">
+         <div id="windowTabs" class="window-tabs"></div>
+         <div id="tabList" class="tab-list"></div>
+       </div>
     </div>
 
     <div class="section">

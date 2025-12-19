@@ -22,9 +22,24 @@ let time = document.getElementById("time")as HTMLInputElement;
 let serverurl = document.getElementById("url") as HTMLTextAreaElement;
 let saved = document.getElementById("saved") as HTMLTextAreaElement;
 let folder = document.getElementById("folder") as HTMLTextAreaElement;
+let themeToggle = document.getElementById("themeToggle") as HTMLButtonElement;
 
 // Declare a variable to store the current mode
 let mode = "active"; // Possible values are "active" or "all"
+let activeWindowIndex = 0;
+
+// Theme toggle
+let isDark = false;
+themeToggle.addEventListener("click", function() {
+  isDark = !isDark;
+  if (isDark) {
+    document.documentElement.classList.add("dark");
+    themeToggle.textContent = "Toggle Light";
+  } else {
+    document.documentElement.classList.remove("dark");
+    themeToggle.textContent = "Toggle Dark";
+  }
+});
 // let mode_location = "none"; // Possible values are "active" or "all"
 // let mode_right = "none"; // Possible values are "active" or "all"
 
@@ -124,6 +139,31 @@ function updateTabList() {
   const text = input.value.trim();
   if (!text) return;
 
+  const windowTabsDiv = document.getElementById("windowTabs") as HTMLDivElement;
+  windowTabsDiv.innerHTML = "";
+
+  // Event delegation for edit name
+  windowTabsDiv.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    if (target.classList.contains('edit-icon')) {
+      e.stopPropagation();
+      const windowIndex = parseInt(target.dataset.windowIndex!);
+      const span = target.previousElementSibling as HTMLElement;
+      span.contentEditable = 'true';
+      span.focus();
+      const range = document.createRange();
+      range.selectNodeContents(span);
+      window.getSelection()!.removeAllRanges();
+      window.getSelection()!.addRange(range);
+      const blurHandler = () => {
+        span.contentEditable = 'false';
+        updateWindowName(windowIndex, span.textContent!);
+        span.removeEventListener('blur', blurHandler);
+      };
+      span.addEventListener('blur', blurHandler);
+    }
+  });
+
   if (mode === "allwindows") {
     // Parse windows
     const windowBlocks = text.split("\n\n").filter(block => block.trim() && block.includes("Window"));
@@ -132,18 +172,29 @@ function updateTabList() {
       const windowLine = lines[0];
       const windowNameMatch = windowLine.match(/Window: (.+)/);
       const windowName = windowNameMatch ? windowNameMatch[1] : `Window ${windowIndex + 1}`;
-      const tabLines = lines.slice(1).filter(line => line.startsWith("URL:") || line.startsWith("Title:"));
 
-      const windowGroup = document.createElement("div");
-      windowGroup.className = "window-group";
-
-      const windowHeader = document.createElement("div");
-      windowHeader.className = "window-header";
-      windowHeader.innerHTML = `
-        <span class="window-label">Window:</span>
-        <input type="text" class="window-name-input" value="${windowName}" data-window-index="${windowIndex}">
+      // Create window tab
+      const windowTab = document.createElement("div");
+      windowTab.className = "window-tab";
+      if (windowIndex === activeWindowIndex) windowTab.classList.add("active");
+      windowTab.innerHTML = `
+        <span class="window-name">${windowName}</span>
+        <span class="edit-icon" data-window-index="${windowIndex}">✎</span>
+        <span class="close-x" data-window-index="${windowIndex}">×</span>
       `;
-      windowGroup.appendChild(windowHeader);
+      windowTab.addEventListener("click", (e) => {
+        if ((e.target as HTMLElement).classList.contains("close-x") || (e.target as HTMLElement).classList.contains("edit-icon")) return;
+        activeWindowIndex = windowIndex;
+        updateTabList();
+      });
+      windowTabsDiv.appendChild(windowTab);
+    });
+
+    // Show content for active window
+    if (windowBlocks[activeWindowIndex]) {
+      const block = windowBlocks[activeWindowIndex];
+      const lines = block.split("\n");
+      const tabLines = lines.slice(1).filter(line => line.startsWith("URL:") || line.startsWith("Title:"));
 
       for (let i = 0; i < tabLines.length; i += 2) {
         const urlLine = tabLines[i];
@@ -155,17 +206,19 @@ function updateTabList() {
           tabItem.className = "tab-item";
           tabItem.innerHTML = `
             <div class="tab-info">
-              <div class="tab-title">${title}</div>
+              <div class="tab-title" contenteditable>${title}</div>
               <div class="tab-url">${url}</div>
             </div>
-            <button class="delete-btn" data-window-index="${windowIndex}" data-tab-index="${i / 2}">Delete</button>
+            <button class="delete-btn" data-window-index="${activeWindowIndex}" data-tab-index="${i / 2}">Delete</button>
           `;
-          windowGroup.appendChild(tabItem);
+          tabItem.querySelector('.tab-title')!.addEventListener('blur', function() {
+            const tabIndex = parseInt((this.parentElement!.parentElement!.querySelector('.delete-btn') as HTMLElement).dataset.tabIndex!);
+            updateTabTitle(activeWindowIndex, tabIndex, this.textContent!);
+          });
+          tabList.appendChild(tabItem);
         }
       }
-
-      tabList.appendChild(windowGroup);
-    });
+    }
   } else {
     // Original parsing for single window
     const entries = text.split("\n\n").filter(entry => entry.trim());
@@ -180,11 +233,14 @@ function updateTabList() {
       tabItem.className = "tab-item";
       tabItem.innerHTML = `
         <div class="tab-info">
-          <div class="tab-title">${title}</div>
+          <div class="tab-title" contenteditable>${title}</div>
           <div class="tab-url">${url}</div>
         </div>
         <button class="delete-btn" data-index="${index}">Delete</button>
       `;
+      tabItem.querySelector('.tab-title')!.addEventListener('blur', function() {
+        updateSingleTabTitle(index, this.textContent!);
+      });
       tabList.appendChild(tabItem);
     });
   }
@@ -203,11 +259,13 @@ function updateTabList() {
     });
   });
 
-  // Add event listeners to window name inputs
-  document.querySelectorAll(".window-name-input").forEach(input => {
-    input.addEventListener("input", function(this: HTMLInputElement) {
+  // Add event listeners to close x
+  document.querySelectorAll(".close-x").forEach(x => {
+    x.addEventListener("click", function(this: HTMLElement) {
       const windowIndex = parseInt(this.dataset.windowIndex!);
-      updateWindowName(windowIndex, this.value);
+      deleteWindow(windowIndex);
+      if (activeWindowIndex >= windowIndex && activeWindowIndex > 0) activeWindowIndex--;
+      updateTabList();
     });
   });
 }
@@ -264,6 +322,63 @@ function updateWindowName(windowIndex: number, newName: string) {
     windowBlocks[windowIndex] = lines.join("\n");
     input.value = windowBlocks.join("\n\n");
     if (input.value) input.value += "\n\n";
+    if (isListView) updateTabList(); // Refresh display
+  }
+}
+
+// Function to update tab title
+function updateTabTitle(windowIndex: number, tabIndex: number, newTitle: string) {
+  const text = input.value.trim();
+  const windowBlocks = text.split("\n\n").filter(block => block.trim() && block.includes("Window"));
+  if (windowBlocks[windowIndex]) {
+    const lines = windowBlocks[windowIndex].split("\n");
+    const tabLines = lines.slice(1).filter(line => line.startsWith("URL:") || line.startsWith("Title:"));
+    if (tabLines[tabIndex * 2 + 1]) {
+      tabLines[tabIndex * 2 + 1] = `Title: ${newTitle}`;
+      // Rebuild
+      let newBlock = lines[0] + "\n";
+      for (let i = 0; i < tabLines.length; i++) {
+        newBlock += tabLines[i] + "\n";
+      }
+      newBlock = newBlock.trim();
+      windowBlocks[windowIndex] = newBlock;
+      input.value = windowBlocks.join("\n\n");
+      if (input.value) input.value += "\n\n";
+      if (isListView) updateTabList(); // Refresh display
+    }
+  }
+}
+
+// Function to update single tab title
+function updateSingleTabTitle(index: number, newTitle: string) {
+  const text = input.value.trim();
+  const entries = text.split("\n\n").filter(entry => entry.trim());
+  if (entries[index]) {
+    const lines = entries[index].split("\n");
+    const titleLineIndex = lines.findIndex(line => line.startsWith("Title: "));
+    if (titleLineIndex !== -1) {
+      lines[titleLineIndex] = `Title: ${newTitle}`;
+      entries[index] = lines.join("\n");
+      input.value = entries.join("\n\n");
+      if (isListView) updateTabList(); // Refresh display
+    }
+  }
+}
+
+// Function to delete a window
+function deleteWindow(windowIndex: number) {
+  const text = input.value.trim();
+  const windowBlocks = text.split("\n\n").filter(block => block.trim() && block.includes("Window"));
+  if (windowBlocks[windowIndex]) {
+    windowBlocks.splice(windowIndex, 1);
+    input.value = windowBlocks.join("\n\n");
+    if (windowBlocks.length === 0) {
+      input.value = "";
+      activeWindowIndex = 0;
+    } else if (activeWindowIndex >= windowIndex) {
+      activeWindowIndex = Math.max(0, activeWindowIndex - 1);
+    }
+    updateTabList();
   }
 }
 
@@ -397,6 +512,7 @@ allwindows.addEventListener("change", function() {
   if (allwindows.checked) {
     // Change the mode to "allwindows"
     mode = "allwindows";
+    activeWindowIndex = 0; // Reset to first window
   } else {
     // Change the mode to "active"
     mode = "active";
