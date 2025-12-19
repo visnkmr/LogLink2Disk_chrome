@@ -92,7 +92,7 @@ exportBtn.addEventListener("click", () => {
 // let mode_right = "none"; // Possible values are "active" or "all"
 
 // Define a function to update the textarea value based on the mode
-function updateTextarea() {
+function updateTextarea(callback?: () => void) {
   input.value=""
 // Call the function and print the result
 // console.log(getTodayDateTimeString());
@@ -108,6 +108,7 @@ function updateTextarea() {
 
       // Set the textarea value to the tab URL and title
       input.value = "URL: " + tab.url + "\nTitle: " + tab.title;
+      if (callback) callback();
     });
   } else if (mode === "all") {
     // Get all tabs in the current window
@@ -117,6 +118,7 @@ function updateTextarea() {
       for (let tab of tabs) {
         // Append the tab URL and title to the textarea value
         input.value += "URL: " + tab.url + "\nTitle: " + tab.title + "\n\n";
+        if (callback) callback();
       }
     });
   }else if (mode === "left") {
@@ -129,8 +131,9 @@ function updateTextarea() {
         if(tab.active==true )
         break
         input.value += "URL: " + tab.url + "\nTitle: " + tab.title + "\n\n";
-        
+
       }
+      if (callback) callback();
     });
   }else if (mode === "right") {
     // Get all tabs in the current window
@@ -144,6 +147,7 @@ function updateTextarea() {
         // Append the tab URL and title to the textarea value
         if(dshow && !tab.active)
           input.value += "URL: " + tab.url + "\nTitle: " + tab.title + "\n\n";
+        if (callback) callback();
       }
     });
    }else if (mode === "selected") {
@@ -153,8 +157,9 @@ function updateTextarea() {
        // Loop over the tabs array
        for (let tab of tabs) {
          // Append the tab URL and title to the textarea value
-         if(tab.highlighted)
-           input.value += "URL: " + tab.url + "\nTitle: " + tab.title + "\n\n";
+          if(tab.highlighted)
+            input.value += "URL: " + tab.url + "\nTitle: " + tab.title + "\n\n";
+          if (callback) callback();
        }
      });
    }else if (mode === "allwindows") {
@@ -175,8 +180,9 @@ function updateTextarea() {
          tabsByWindow[windowId].forEach(tab => {
            input.value += "URL: " + tab.url + "\nTitle: " + tab.title + "\n";
          });
-         input.value += "\n";
-       }
+          input.value += "\n";
+        }
+        if (callback) callback();
      });
    }
 }
@@ -464,10 +470,11 @@ toggle.addEventListener("change", function() {
   }
 
   // Update the textarea value
-  updateTextarea();
-  if (isListView) {
-    updateTabList();
-  }
+  updateTextarea(() => {
+    if (isListView) {
+      updateTabList();
+    }
+  });
 });
 
 // Add a change event listener to the checkbox
@@ -482,10 +489,11 @@ left.addEventListener("change", function() {
   }
 
   // Update the textarea value
-  updateTextarea();
-  if (isListView) {
-    updateTabList();
-  }
+  updateTextarea(() => {
+    if (isListView) {
+      updateTabList();
+    }
+  });
 });
 
 // Add a change event listener to the checkbox
@@ -530,10 +538,11 @@ right.addEventListener("change", function() {
   }
 
   // Update the textarea value
-  updateTextarea();
-  if (isListView) {
-    updateTabList();
-  }
+  updateTextarea(() => {
+    if (isListView) {
+      updateTabList();
+    }
+  });
 });
 
 // Add a change event listener to the checkbox
@@ -548,10 +557,11 @@ selectedtabs.addEventListener("change", function() {
   }
 
   // Update the textarea value
-  updateTextarea();
-  if (isListView) {
-    updateTabList();
-  }
+  updateTextarea(() => {
+    if (isListView) {
+      updateTabList();
+    }
+  });
 });
 
 // Add a change event listener to the checkbox
@@ -567,10 +577,11 @@ allwindows.addEventListener("change", function() {
   }
 
   // Update the textarea value
-  updateTextarea();
-  if (isListView) {
-    updateTabList();
-  }
+  updateTextarea(() => {
+    if (isListView) {
+      updateTabList();
+    }
+  });
 });
 
 // Add a click event listener to the button
